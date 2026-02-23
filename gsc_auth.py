@@ -15,7 +15,8 @@ from googleapiclient.discovery import build
 SCOPES = ["https://www.googleapis.com/auth/webmasters.readonly"]
 
 # ファイルパス設定
-CLIENT_SECRET_FILE = "client_secret_742231208085-hd4nk5m3mjpergfa3gcep2951e2au2sh.apps.googleusercontent.com.json"  # Google Cloud Consoleからダウンロード
+CLIENT_SECRET_FILE = "client_secret_742231208085-8q1lbjmvbuennmmgnrvl41pjb5ruqrom.apps.googleusercontent.com.json"
+# CLIENT_SECRET_FILE = "client_secret_742231208085-hd4nk5m3mjpergfa3gcep2951e2au2sh.apps.googleusercontent.com.json"  # Google Cloud Consoleからダウンロード
 TOKEN_FILE = "token.json"                  # 認証後に自動生成されるキャッシュ
 
 
