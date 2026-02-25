@@ -12,6 +12,7 @@ export default async function DashboardPage({
 }: {
   searchParams: DashboardSearchParams;
 }) {
+  // ログイン中ユーザー情報とOAuth結果クエリを画面表示に使う。
   const user = await currentUser();
   const params = await searchParams;
   const isConnected = params.gsc === "connected";
