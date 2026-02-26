@@ -1,6 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@clerk/nextjs/server";
 
 const STATE_COOKIE_NAME = "gsc_oauth_state";
+
+type GoogleTokenResponse = {
+  access_token: string;
+  expires_in: number;
+  refresh_token?: string;
+  scope: string;
+  token_type: string;
+};
 
 function getRequiredEnv(name: string): string {
   const value = process.env[name];
@@ -24,27 +33,84 @@ function buildDashboardRedirect(
   return url;
 }
 
+function buildDashboardResponse(
+  req: NextRequest,
+  status: "connected" | "error",
+  reason?: string,
+) {
+  const response = NextResponse.redirect(
+    buildDashboardRedirect(req, status, reason),
+  );
+  // callback処理後はstate Cookieを必ず破棄する。
+  response.cookies.set({
+    name: STATE_COOKIE_NAME,
+    value: "",
+    maxAge: 0,
+    path: "/",
+  });
+  return response;
+}
+
+async function saveTokenToSupabase(
+  userId: string,
+  token: GoogleTokenResponse,
+): Promise<void> {
+  const supabaseUrl = getRequiredEnv("SUPABASE_URL");
+  const supabaseServiceRoleKey = getRequiredEnv("SUPABASE_SERVICE_ROLE_KEY");
+  const expiresAt = new Date(Date.now() + token.expires_in * 1000).toISOString();
+
+  const response = await fetch(
+    `${supabaseUrl}/rest/v1/gsc_oauth_tokens?on_conflict=clerk_user_id`,
+    {
+      method: "POST",
+      headers: {
+        apikey: supabaseServiceRoleKey,
+        Authorization: `Bearer ${supabaseServiceRoleKey}`,
+        "Content-Type": "application/json",
+        Prefer: "resolution=merge-duplicates,return=minimal",
+      },
+      body: JSON.stringify({
+        clerk_user_id: userId,
+        access_token: token.access_token,
+        refresh_token: token.refresh_token ?? null,
+        scope: token.scope,
+        token_type: token.token_type,
+        expires_at: expiresAt,
+      }),
+      cache: "no-store",
+    },
+  );
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Supabase save failed: ${response.status} ${errorText}`);
+  }
+}
+
 export async function GET(req: NextRequest) {
   // Googleから返るクエリと、開始時に保存したstateを取得する。
   const state = req.nextUrl.searchParams.get("state");
   const code = req.nextUrl.searchParams.get("code");
   const oauthError = req.nextUrl.searchParams.get("error");
   const storedState = req.cookies.get(STATE_COOKIE_NAME)?.value;
+  const { userId } = await auth();
 
   // ユーザーが同意を拒否した場合などはそのまま失敗理由を返す。
   if (oauthError) {
-    return NextResponse.redirect(buildDashboardRedirect(req, "error", oauthError));
+    return buildDashboardResponse(req, "error", oauthError);
+  }
+
+  if (!userId) {
+    return buildDashboardResponse(req, "error", "unauthorized");
   }
 
   // state不一致は不正リクエストとして扱う。
   if (!state || !storedState || state !== storedState) {
-    return NextResponse.redirect(
-      buildDashboardRedirect(req, "error", "state_mismatch"),
-    );
+    return buildDashboardResponse(req, "error", "state_mismatch");
   }
 
   if (!code) {
-    return NextResponse.redirect(buildDashboardRedirect(req, "error", "missing_code"));
+    return buildDashboardResponse(req, "error", "missing_code");
   }
 
   try {
@@ -73,25 +139,18 @@ export async function GET(req: NextRequest) {
     if (!tokenResponse.ok) {
       const errorText = await tokenResponse.text();
       console.error("GSC token exchange failed:", errorText);
-      return NextResponse.redirect(
-        buildDashboardRedirect(req, "error", "token_exchange_failed"),
-      );
+      return buildDashboardResponse(req, "error", "token_exchange_failed");
     }
 
-    // Step 2ではトークン永続化は未実装。Step 3でDB保存を追加予定。
-    const redirect = NextResponse.redirect(
-      buildDashboardRedirect(req, "connected"),
-    );
-    // 使い終わったstate Cookieを削除する。
-    redirect.cookies.set({
-      name: STATE_COOKIE_NAME,
-      value: "",
-      maxAge: 0,
-      path: "/",
-    });
-    return redirect;
+    const tokenData = (await tokenResponse.json()) as GoogleTokenResponse;
+    await saveTokenToSupabase(userId, tokenData);
+
+    return buildDashboardResponse(req, "connected");
   } catch (error) {
     console.error("GSC OAuth callback failed:", error);
-    return NextResponse.redirect(buildDashboardRedirect(req, "error", "missing_env"));
+    if (error instanceof Error && error.message.startsWith("Missing required")) {
+      return buildDashboardResponse(req, "error", "missing_env");
+    }
+    return buildDashboardResponse(req, "error", "storage_failed");
   }
 }
