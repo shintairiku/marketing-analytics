@@ -33,6 +33,10 @@ GOOGLE_OAUTH_CLIENT_SECRET=...
 GOOGLE_OAUTH_REDIRECT_URI=http://localhost:3000/api/auth/gsc/callback
 # Optional (default: webmasters.readonly)
 # GOOGLE_OAUTH_SCOPES="https://www.googleapis.com/auth/webmasters.readonly"
+
+# Supabase (Step 3: OAuthトークン保存)
+SUPABASE_URL=...
+SUPABASE_SERVICE_ROLE_KEY=...
 ```
 
 ## Learn More

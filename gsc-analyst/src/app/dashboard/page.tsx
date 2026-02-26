@@ -40,7 +40,7 @@ export default async function DashboardPage({
           </Link>
           {isConnected && (
             <p className="text-sm text-green-700">
-              GSC OAuth連携に成功しました（Step 3でトークン保存を実装します）
+              GSC OAuth連携に成功し、トークンを保存しました。
             </p>
           )}
           {isError && (
