@@ -214,16 +214,18 @@ async def call_tool(name: str, arguments: dict) -> list[types.TextContent]:
         )
 
     elif name == "list_ga4_properties":
-        response = ga4_admin.properties().list(pageSize=50).execute()
-        properties = response.get("properties", [])
+        response = ga4_admin.accountSummaries().list(pageSize=200).execute()
+        account_summaries = response.get("accountSummaries", [])
         lines = []
-        for prop in properties:
-            prop_name = prop.get("name", "")
-            prop_id = prop_name.split("/")[-1] if "/" in prop_name else prop_name
-            lines.append(
-                f"- property_id:{prop_id} display_name:{prop.get('displayName', '名称なし')} "
-                f"time_zone:{prop.get('timeZone', '不明')} currency:{prop.get('currencyCode', '不明')}"
-            )
+        for account in account_summaries:
+            account_name = account.get("account", "不明")
+            for prop in account.get("propertySummaries", []):
+                prop_name = prop.get("property", "")
+                prop_id = prop_name.split("/")[-1] if "/" in prop_name else prop_name
+                lines.append(
+                    f"- property_id:{prop_id} display_name:{prop.get('displayName', '名称なし')} "
+                    f"account:{account_name} property_type:{prop.get('propertyType', '不明')}"
+                )
         text = "\n".join(lines) if lines else "GA4プロパティが見つかりませんでした"
 
     elif name == "get_ga4_report":

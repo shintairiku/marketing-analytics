@@ -4,6 +4,8 @@
   pip install google-auth google-auth-oauthlib google-api-python-client
 """
 
+import errno
+import os
 from pathlib import Path
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
@@ -20,6 +22,31 @@ SCOPES = [
 CLIENT_SECRET_FILE = "client_secret_742231208085-8q1lbjmvbuennmmgnrvl41pjb5ruqrom.apps.googleusercontent.com.json"
 # CLIENT_SECRET_FILE = "client_secret_742231208085-hd4nk5m3mjpergfa3gcep2951e2au2sh.apps.googleusercontent.com.json"  # Google Cloud Consoleからダウンロード
 TOKEN_FILE = "token.json"                  # 認証後に自動生成されるキャッシュ
+
+
+def _run_oauth_local_server(flow: InstalledAppFlow) -> Credentials:
+    """
+    ローカルサーバーでOAuth認証を実行する。
+    既定ポートが使用中の場合は自動で別ポートにフォールバックする。
+    """
+    preferred_port = int(os.getenv("GOOGLE_OAUTH_LOCAL_PORT", "3000"))
+    candidate_ports = [preferred_port, 8080, 0]  # 0 はOSに空きポートを選ばせる
+
+    last_error: OSError | None = None
+    for port in candidate_ports:
+        try:
+            print(f"[INFO] OAuthローカルサーバーを起動します (port={port})")
+            return flow.run_local_server(port=port)
+        except OSError as exc:
+            if exc.errno == errno.EADDRINUSE:
+                print(f"[WARN] port={port} は使用中のため、別ポートで再試行します")
+                last_error = exc
+                continue
+            raise
+
+    if last_error:
+        raise last_error
+    raise RuntimeError("OAuthローカルサーバーの起動に失敗しました")
 
 
 def get_credentials() -> Credentials:
@@ -42,7 +69,7 @@ def get_credentials() -> Credentials:
         else:
             # 初回: ブラウザでOAuth認証
             flow = InstalledAppFlow.from_client_secrets_file(CLIENT_SECRET_FILE, SCOPES)
-            creds = flow.run_local_server(port=3000)
+            creds = _run_oauth_local_server(flow)
 
         # 次回のためにトークンをキャッシュ保存
         with open(TOKEN_FILE, "w") as f:
@@ -83,8 +110,16 @@ def verify_gsc_auth(service) -> None:
 
 def verify_ga4_auth(admin_service) -> None:
     """認証確認: GA4プロパティ一覧を表示"""
-    result = admin_service.properties().list(pageSize=20).execute()
-    properties = result.get("properties", [])
+    result = admin_service.accountSummaries().list(pageSize=200).execute()
+    account_summaries = result.get("accountSummaries", [])
+
+    properties = []
+    for account in account_summaries:
+        for prop in account.get("propertySummaries", []):
+            properties.append({
+                "name": prop.get("property", "不明"),
+                "displayName": prop.get("displayName", "名称なし"),
+            })
 
     if not properties:
         print("[INFO] GA4 プロパティが見つかりませんでした")
