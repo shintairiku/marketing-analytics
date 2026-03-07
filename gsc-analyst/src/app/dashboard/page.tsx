@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { UserButton } from "@clerk/nextjs";
 import { currentUser } from "@clerk/nextjs/server";
+import { GscSitesPanel } from "@/components/gsc-sites-panel";
 
 type DashboardSearchParams = Promise<{
   gsc?: string;
@@ -31,7 +32,9 @@ export default async function DashboardPage({
         <p className="text-gray-500 text-sm mb-2">ログイン中</p>
         <p className="text-xl font-medium mb-8">{user?.emailAddresses[0]?.emailAddress}</p>
         <div className="space-y-4">
-          <p className="text-gray-600">Google Search Console を連携してください</p>
+          <p className="text-gray-600">
+            Google Search Console を連携してサイト一覧を取得してください
+          </p>
           <Link
             href="/api/auth/gsc"
             className="inline-block rounded-md bg-blue-600 px-6 py-3 font-medium text-white hover:bg-blue-700"
@@ -48,6 +51,10 @@ export default async function DashboardPage({
               GSC OAuth連携に失敗しました: {params.reason ?? "unknown_error"}
             </p>
           )}
+        </div>
+
+        <div className="mt-8">
+          <GscSitesPanel />
         </div>
       </main>
     </div>
