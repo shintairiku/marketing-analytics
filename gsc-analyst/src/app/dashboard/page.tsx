@@ -33,7 +33,7 @@ export default async function DashboardPage({
           <p className="text-sm text-gray-500">ログイン中</p>
           <p className="mt-1 text-lg font-medium text-gray-900">{user?.emailAddresses[0]?.emailAddress}</p>
           <p className="mt-2 text-sm text-gray-600">
-            Google連携1回で Search Console と GA4 の両方を分析できます。
+            Google連携1回で Search Console と GA4 を利用できます。分析サービスの選択はAIエージェントが自動で行います。
           </p>
 
           <div className="mt-4 flex flex-wrap items-center gap-3">

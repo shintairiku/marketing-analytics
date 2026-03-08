@@ -40,9 +40,9 @@ ANTHROPIC_API_KEY=...
 ## Features
 
 - Google OAuth (single connection)
-- Google Search Console analysis chat
-- Google Analytics 4 analysis chat
-- Provider-switchable dashboard UI
+- MCP-style analytics tools (GSC / GA4)
+- AI agent that selects tools from prompt intent
+- Unified chat UI (no provider selector)
 
 ## API Routes
 
@@ -50,4 +50,4 @@ ANTHROPIC_API_KEY=...
 - `GET /api/auth/google/callback`
 - `GET /api/sites` (GSC site list)
 - `GET /api/ga4/properties` (GA4 property list)
-- `POST /api/chat` (`provider: "gsc" | "ga4"`)
+- `POST /api/chat` (`message` only, tool selection is automatic)

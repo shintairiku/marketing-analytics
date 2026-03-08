@@ -17,7 +17,7 @@ type GscSearchAnalyticsResponse = {
   rows?: GscSearchAnalyticsRow[];
 };
 
-type SearchAnalyticsDimension = "query" | "page" | "date" | "device" | "country";
+export type SearchAnalyticsDimension = "query" | "page" | "date" | "device" | "country";
 
 async function fetchSearchAnalytics(
   accessToken: string,

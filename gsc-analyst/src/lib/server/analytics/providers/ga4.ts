@@ -7,6 +7,7 @@ export type Ga4PropertyItem = {
 };
 
 type Ga4Dimension = "sessionSourceMedium" | "landingPagePlusQueryString" | "date" | "deviceCategory" | "country";
+export type { Ga4Dimension };
 
 type RunReportResponse = {
   rows?: Array<{
@@ -162,4 +163,16 @@ export async function fetchGa4Datasets(params: {
   );
 
   return reports;
+}
+
+export async function fetchGa4SingleDimension(params: {
+  accessToken: string;
+  propertyId: string;
+  startDate: string;
+  endDate: string;
+  rowLimit: number;
+  dimension: Ga4Dimension;
+}): Promise<NormalizedAnalyticsRow[]> {
+  const raw = await runReport(params);
+  return normalizeRows(raw.rows);
 }
