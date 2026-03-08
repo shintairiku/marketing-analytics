@@ -1,23 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
+import type { GoogleTokenResponse } from "@/lib/gsc/types";
+import { getRequiredEnv } from "@/lib/server/env";
+import { buildSupabaseHeaders } from "@/lib/server/gsc/token";
 
 const STATE_COOKIE_NAME = "gsc_oauth_state";
-
-type GoogleTokenResponse = {
-  access_token: string;
-  expires_in: number;
-  refresh_token?: string;
-  scope: string;
-  token_type: string;
-};
-
-function getRequiredEnv(name: string): string {
-  const value = process.env[name];
-  if (!value) {
-    throw new Error(`Missing required environment variable: ${name}`);
-  }
-  return value;
-}
 
 function buildDashboardRedirect(
   req: NextRequest,
@@ -64,9 +51,7 @@ async function saveTokenToSupabase(
     {
       method: "POST",
       headers: {
-        apikey: supabaseServiceRoleKey,
-        Authorization: `Bearer ${supabaseServiceRoleKey}`,
-        "Content-Type": "application/json",
+        ...buildSupabaseHeaders(supabaseServiceRoleKey),
         Prefer: "resolution=merge-duplicates,return=minimal",
       },
       body: JSON.stringify({

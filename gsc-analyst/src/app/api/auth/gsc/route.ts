@@ -1,15 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getRequiredEnv } from "@/lib/server/env";
 
 const STATE_COOKIE_NAME = "gsc_oauth_state";
 const DEFAULT_SCOPES = ["https://www.googleapis.com/auth/webmasters.readonly"];
-
-function getRequiredEnv(name: string): string {
-  const value = process.env[name];
-  if (!value) {
-    throw new Error(`Missing required environment variable: ${name}`);
-  }
-  return value;
-}
 
 export async function GET(req: NextRequest) {
   try {
