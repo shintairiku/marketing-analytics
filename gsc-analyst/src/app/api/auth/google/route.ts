@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getRequiredEnv } from "@/lib/server/env";
+import { getGoogleAuthMode } from "@/lib/server/google/auth-mode";
 
 const STATE_COOKIE_NAME = "google_oauth_state";
 const DEFAULT_SCOPES = [
@@ -8,6 +9,14 @@ const DEFAULT_SCOPES = [
 ];
 
 export async function GET(req: NextRequest) {
+  if ((await getGoogleAuthMode()) === "service_account") {
+    const url = req.nextUrl.clone();
+    url.pathname = "/dashboard";
+    url.searchParams.set("google", "connected");
+    url.searchParams.set("mode", "service_account");
+    return NextResponse.redirect(url);
+  }
+
   try {
     const clientId = getRequiredEnv("GOOGLE_OAUTH_CLIENT_ID");
     const redirectUri = getRequiredEnv("GOOGLE_OAUTH_REDIRECT_URI");
