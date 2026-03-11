@@ -57,6 +57,18 @@ ANTHROPIC_API_KEY=...
 - `backend/`: API ハンドラ実装とサーバー処理
 - `src/app/`: Next.js App Router のエントリポイント。`frontend` / `backend` の薄いラッパーのみ
 
+## Docker
+
+- `Dockerfile.frontend`: Vercel 以外で front をコンテナ実行したい場合の Next.js standalone イメージ
+- `Dockerfile.backend`: Cloud Run 向けの Next.js standalone イメージ
+
+例:
+
+```bash
+docker build -f Dockerfile.frontend -t gsc-analyst-frontend .
+docker build -f Dockerfile.backend -t gsc-analyst-backend .
+```
+
 ## API Routes
 
 - `GET /api/auth/google`
