@@ -1,9 +1,8 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { runAnalyticsAgent } from "@/lib/server/agent/analytics-agent";
-import { getRequiredEnv } from "@/lib/server/env";
 import { buildAnalyticsMcpTools } from "@/lib/server/mcp/analytics-tools";
-import { getGoogleTokenFromSupabase, withRefreshedGoogleAccessToken } from "@/lib/server/google/token";
+import { getGoogleAccessContext, withGoogleAccessToken } from "@/lib/server/google/access";
 
 type ChatRequestBody = {
   message?: string;
@@ -26,19 +25,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "invalid_message" }, { status: 400 });
     }
 
-    const supabaseUrl = getRequiredEnv("SUPABASE_URL");
-    const serviceRoleKey = getRequiredEnv("SUPABASE_SERVICE_ROLE_KEY");
-    const token = await getGoogleTokenFromSupabase(userId, supabaseUrl, serviceRoleKey);
-
-    if (!token) {
+    const context = await getGoogleAccessContext(userId);
+    if (context.mode === "oauth" && !context.token) {
       return NextResponse.json({ error: "google_not_connected" }, { status: 404 });
     }
 
-    const result = await withRefreshedGoogleAccessToken({
-      userId,
-      token,
-      supabaseUrl,
-      serviceRoleKey,
+    const result = await withGoogleAccessToken({
+      context,
       runWithToken: async (accessToken) => {
         const tools = buildAnalyticsMcpTools(accessToken);
         return runAnalyticsAgent({

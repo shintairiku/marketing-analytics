@@ -26,6 +26,13 @@ GOOGLE_OAUTH_REDIRECT_URI=http://localhost:3000/api/auth/google/callback
 # Optional (default: webmasters.readonly + analytics.readonly)
 # GOOGLE_OAUTH_SCOPES="https://www.googleapis.com/auth/webmasters.readonly https://www.googleapis.com/auth/analytics.readonly"
 
+# Optional: ダッシュボードでサービスアカウント認証を選ぶ場合
+# GOOGLE_SERVICE_ACCOUNT_CLIENT_EMAIL=...@...iam.gserviceaccount.com
+# GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY=\"-----BEGIN PRIVATE KEY-----\\n...\\n-----END PRIVATE KEY-----\\n\"
+# Optional (default: webmasters.readonly + analytics.readonly)
+# GOOGLE_SERVICE_ACCOUNT_SCOPES=\"https://www.googleapis.com/auth/webmasters.readonly https://www.googleapis.com/auth/analytics.readonly\"
+# GSC の対象プロパティ / GA4 の対象アカウントに、このサービスアカウントを閲覧権限付きで追加してください
+
 # Supabase
 SUPABASE_URL=...
 SUPABASE_SERVICE_ROLE_KEY=...
@@ -39,7 +46,7 @@ ANTHROPIC_API_KEY=...
 
 ## Features
 
-- Google OAuth (single connection)
+- ダッシュボードトグルで Google OAuth / Service Account を切替
 - MCP-style analytics tools (GSC / GA4)
 - AI agent that selects tools from prompt intent
 - Unified chat UI (no provider selector)

@@ -214,6 +214,7 @@ __marimo__/
 token.json
 client_secret_*.json
 *.credentials.json
+marketing-automation-*
 
 # Local pyenv version
 .python-version
