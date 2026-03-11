@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import { getRequiredEnv } from "@/lib/server/env";
 import { listGa4Properties } from "@/lib/server/analytics/providers/ga4";
-import { getGoogleTokenFromSupabase, withRefreshedGoogleAccessToken } from "@/lib/server/google/token";
+import { getGoogleAccessContext, withGoogleAccessToken } from "@/lib/server/google/access";
 
 export async function GET() {
   try {
@@ -11,19 +10,13 @@ export async function GET() {
       return NextResponse.json({ error: "unauthorized" }, { status: 401 });
     }
 
-    const supabaseUrl = getRequiredEnv("SUPABASE_URL");
-    const serviceRoleKey = getRequiredEnv("SUPABASE_SERVICE_ROLE_KEY");
-    const token = await getGoogleTokenFromSupabase(userId, supabaseUrl, serviceRoleKey);
-
-    if (!token) {
+    const context = await getGoogleAccessContext(userId);
+    if (context.mode === "oauth" && !context.token) {
       return NextResponse.json({ error: "google_not_connected" }, { status: 404 });
     }
 
-    const properties = await withRefreshedGoogleAccessToken({
-      userId,
-      token,
-      supabaseUrl,
-      serviceRoleKey,
+    const properties = await withGoogleAccessToken({
+      context,
       runWithToken: (accessToken) => listGa4Properties(accessToken),
       shouldRefreshRetry: () => true,
     });
