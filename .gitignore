@@ -222,3 +222,4 @@ marketing-automation-*
 
 # Local pyenv version
 .python-version
+/temp

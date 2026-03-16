@@ -9,9 +9,10 @@ import { getBrowserBackendOrigin } from "@/lib/browser-config";
 
 type AuthModeToggleProps = {
   initialMode: GoogleAuthMode;
+  onModeChange?: (mode: GoogleAuthMode) => void;
 };
 
-export function AuthModeToggle({ initialMode }: AuthModeToggleProps) {
+export function AuthModeToggle({ initialMode, onModeChange }: AuthModeToggleProps) {
   const { getToken } = useAuth();
   const router = useRouter();
   const [selectedMode, setSelectedMode] = useState<GoogleAuthMode>(initialMode);
@@ -42,6 +43,7 @@ export function AuthModeToggle({ initialMode }: AuthModeToggleProps) {
       }
 
       setSelectedMode(mode);
+      onModeChange?.(mode);
       startTransition(() => {
         router.refresh();
       });

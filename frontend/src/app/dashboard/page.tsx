@@ -1,8 +1,7 @@
 import { UserButton } from "@clerk/nextjs";
 import { currentUser } from "@clerk/nextjs/server";
-import { AuthModeToggle } from "@/components/auth-mode-toggle";
+import { AuthModePanel } from "@/components/auth-mode-panel";
 import { GscChatPanel } from "@/components/gsc-chat-panel";
-import { GoogleConnectButton } from "@/components/google-connect-button";
 import { parseGoogleAuthMode } from "@/lib/google-auth-mode";
 
 type DashboardSearchParams = Promise<{
@@ -22,8 +21,6 @@ export default async function DashboardPage({
   const authMode = parseGoogleAuthMode(params.mode);
 
   const connectionStatus = params.google ?? params.gsc;
-  const isConnected = connectionStatus === "connected" || authMode === "service_account";
-  const isError = connectionStatus === "error";
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -40,28 +37,11 @@ export default async function DashboardPage({
             Google連携1回で Search Console と GA4 を利用できます。分析サービスの選択はAIエージェントが自動で行います。
           </p>
 
-          <div className="mt-4">
-            <p className="mb-2 text-sm font-medium text-gray-700">認証方式</p>
-            <AuthModeToggle initialMode={authMode} />
-          </div>
-
-          <div className="mt-4 flex flex-wrap items-center gap-3">
-            {authMode === "oauth" ? (
-              <GoogleConnectButton />
-            ) : (
-              <p className="text-sm text-green-700">
-                サービスアカウント認証モードです。ユーザーごとの Google OAuth 連携は不要です。
-              </p>
-            )}
-            {authMode === "oauth" && isConnected && (
-              <p className="text-sm text-green-700">Google OAuth連携に成功しました。</p>
-            )}
-            {isError && (
-              <p className="text-sm text-red-700">
-                Google OAuth連携に失敗しました: {params.reason ?? "unknown_error"}
-              </p>
-            )}
-          </div>
+          <AuthModePanel
+            initialMode={authMode}
+            connectionStatus={connectionStatus}
+            reason={params.reason}
+          />
         </div>
 
         <GscChatPanel />
