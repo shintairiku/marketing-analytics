@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import { getFrontendAppUrl } from "@/lib/server/frontend-url";
+import { getFrontendAppOrigin } from "@/lib/server/frontend-url";
 
 function buildHeaders(): HeadersInit {
   return {
-    "Access-Control-Allow-Origin": getFrontendAppUrl(),
+    "Access-Control-Allow-Origin": getFrontendAppOrigin(),
     "Access-Control-Allow-Credentials": "true",
     "Access-Control-Allow-Headers": "Authorization, Content-Type",
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",

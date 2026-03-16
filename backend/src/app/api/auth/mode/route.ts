@@ -14,12 +14,13 @@ function resolveRedirectPath(value: string | null): string {
 }
 
 function buildResponseWithCookie(mode: GoogleAuthMode, response: NextResponse): NextResponse {
+  const isProduction = process.env.NODE_ENV === "production";
   response.cookies.set({
     name: GOOGLE_AUTH_MODE_COOKIE_NAME,
     value: mode,
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
+    secure: isProduction,
+    sameSite: isProduction ? "none" : "lax",
     path: "/",
     maxAge: 60 * 60 * 24 * 30,
   });

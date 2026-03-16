@@ -1,7 +1,15 @@
 const DEFAULT_FRONTEND_URL = "http://localhost:3000";
 
-export function getFrontendAppUrl(): string {
-  return process.env.FRONTEND_APP_URL ?? DEFAULT_FRONTEND_URL;
+function getFrontendAppUrlValue(): string {
+  return (process.env.FRONTEND_APP_URL ?? DEFAULT_FRONTEND_URL).trim();
+}
+
+export function getFrontendAppUrl(): URL {
+  return new URL(getFrontendAppUrlValue());
+}
+
+export function getFrontendAppOrigin(): string {
+  return getFrontendAppUrl().origin;
 }
 
 export function buildFrontendDashboardUrl(
