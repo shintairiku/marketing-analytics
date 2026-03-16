@@ -53,6 +53,7 @@ export function GscChatPanel() {
       const token = await getToken();
       const response = await fetch(`${getBrowserBackendOrigin()}/api/chat`, {
         method: "POST",
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
