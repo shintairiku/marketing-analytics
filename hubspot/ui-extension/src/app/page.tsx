@@ -93,7 +93,7 @@ export default function AnalyticsDashboard() {
       </div>
 
       {/* サマリーカード */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {summaryMetrics.map((metric) => (
           <MetricCard 
             key={metric.id} 
@@ -101,7 +101,7 @@ export default function AnalyticsDashboard() {
             providerColor="#3b82f6"
           />
         ))}
-      </div>
+      </div> */}
 
       {/* メインタブ */}
       <Tabs defaultValue="overview" className="space-y-6">
