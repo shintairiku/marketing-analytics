@@ -8,6 +8,11 @@ type ChatMessage = {
   id: string;
   role: "user" | "assistant";
   content: string;
+  toolCalls?: Array<{
+    name: string;
+    input: Record<string, unknown>;
+    result: Record<string, unknown>;
+  }>;
 };
 
 type ApiError = {
@@ -22,6 +27,39 @@ type ChatApiSuccess = {
     result: Record<string, unknown>;
   }>;
 };
+
+function getToolLabel(name: string): string {
+  if (name === "get_gsc_search_analytics") {
+    return "GSC";
+  }
+  if (name === "get_ga4_report") {
+    return "GA4";
+  }
+  if (name === "list_gsc_sites") {
+    return "GSC site list";
+  }
+  if (name === "list_ga4_properties") {
+    return "GA4 property list";
+  }
+  return name;
+}
+
+function formatToolCall(call: NonNullable<ChatMessage["toolCalls"]>[number]): string {
+  const result = call.result;
+  const startDate = typeof result.startDate === "string" ? result.startDate : null;
+  const endDate = typeof result.endDate === "string" ? result.endDate : null;
+  const dimension = typeof result.dimension === "string" ? result.dimension : null;
+
+  const parts = [getToolLabel(call.name)];
+  if (startDate && endDate) {
+    parts.push(`${startDate} - ${endDate}`);
+  }
+  if (dimension) {
+    parts.push(`dimension: ${dimension}`);
+  }
+
+  return parts.join(" | ");
+}
 
 export function GscChatPanel() {
   const { getToken } = useAuth();
@@ -74,6 +112,7 @@ export function GscChatPanel() {
           id: `${Date.now()}-assistant`,
           role: "assistant",
           content: data.answer ?? "回答を取得できませんでした。",
+          toolCalls: data.toolCalls,
         },
       ]);
     } catch (error) {
@@ -117,7 +156,14 @@ export function GscChatPanel() {
                   : "mr-auto w-fit max-w-[90%] whitespace-pre-wrap rounded-lg bg-white px-3 py-2 text-sm text-gray-900 shadow-sm"
               }
             >
-              {message.content}
+              <div>{message.content}</div>
+              {message.role === "assistant" && message.toolCalls && message.toolCalls.length > 0 && (
+                <div className="mt-2 border-t border-gray-200 pt-2 text-xs text-gray-500">
+                  {message.toolCalls.map((call, index) => (
+                    <div key={`${message.id}-tool-${index}`}>{formatToolCall(call)}</div>
+                  ))}
+                </div>
+              )}
             </div>
           ))}
           {sending && (

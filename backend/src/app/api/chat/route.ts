@@ -9,6 +9,30 @@ type ChatRequestBody = {
   message?: string;
 };
 
+function buildReferenceDateContext() {
+  const now = new Date();
+  const formatter = new Intl.DateTimeFormat("ja-JP", {
+    timeZone: "Asia/Tokyo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  });
+  const parts = formatter.formatToParts(now);
+  const lookup = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  const referenceDate = `${lookup.year}-${lookup.month}-${lookup.day}`;
+  const referenceDateTime = `${referenceDate} ${lookup.hour}:${lookup.minute}:${lookup.second}`;
+
+  return {
+    referenceDate,
+    referenceDateTime,
+    referenceTimezone: "Asia/Tokyo",
+  };
+}
+
 export async function POST(req: Request) {
   try {
     const userId = await requireUserId(req);
@@ -32,9 +56,11 @@ export async function POST(req: Request) {
       context,
       runWithToken: async (accessToken) => {
         const tools = buildAnalyticsMcpTools(accessToken);
+        const dateContext = buildReferenceDateContext();
         return runAnalyticsAgent({
           userMessage: message,
           tools,
+          ...dateContext,
         });
       },
       shouldRefreshRetry: () => true,
