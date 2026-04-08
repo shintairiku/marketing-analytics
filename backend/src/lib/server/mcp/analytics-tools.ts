@@ -104,7 +104,7 @@ export function buildAnalyticsMcpTools(accessToken: string): McpTool[] {
     {
       name: "get_gsc_search_analytics",
       description:
-        "GSCの検索パフォーマンスを取得する。siteUrl未指定時は連携済みの先頭サイトを使う。",
+        "GSCの検索パフォーマンスを取得する。siteUrl未指定時は連携済みの先頭サイトを使う。期間指定の質問では startDate と endDate を必ず明示すること。",
       inputSchema: {
         type: "object",
         properties: {
@@ -171,7 +171,7 @@ export function buildAnalyticsMcpTools(accessToken: string): McpTool[] {
     {
       name: "get_ga4_report",
       description:
-        "GA4レポートを取得する。propertyId未指定時は連携済みの先頭プロパティを使う。",
+        "GA4レポートを取得する。propertyId未指定時は連携済みの先頭プロパティを使う。期間指定の質問では startDate と endDate を必ず明示すること。",
       inputSchema: {
         type: "object",
         properties: {

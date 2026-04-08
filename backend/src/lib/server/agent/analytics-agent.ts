@@ -21,6 +21,18 @@ type AnthropicMessageResponse = {
   stop_reason?: string;
 };
 
+function hasTimeReference(text: string): boolean {
+  return /今日|本日|昨日|一昨日|今週|先週|今月|先月|今年|昨年|直近|最近|過去|前年|前月|last|today|yesterday|week|month|year/i.test(
+    text,
+  );
+}
+
+function isAnalyticsQuestion(text: string): boolean {
+  return /データ|分析|推移|比較|クリック|表示回数|ctr|順位|流入|cv|コンバージョン|セッション|ユーザー|改善|課題|performance|analytics|traffic|conversion|session|user/i.test(
+    text,
+  );
+}
+
 function toolMap(tools: McpTool[]): Map<string, McpTool> {
   return new Map(tools.map((tool) => [tool.name, tool]));
 }
@@ -28,6 +40,9 @@ function toolMap(tools: McpTool[]): Map<string, McpTool> {
 export async function runAnalyticsAgent(params: {
   userMessage: string;
   tools: McpTool[];
+  referenceDate: string;
+  referenceDateTime: string;
+  referenceTimezone: string;
 }): Promise<{ answer: string; toolCalls: Array<{ name: string; input: JsonObject; result: JsonObject }> }> {
   const anthropicApiKey = process.env.ANTHROPIC_API_KEY;
   if (!anthropicApiKey) {
@@ -42,6 +57,7 @@ export async function runAnalyticsAgent(params: {
     description: tool.description,
     input_schema: tool.inputSchema,
   }));
+  const shouldRequireToolUse = hasTimeReference(params.userMessage) || isAnalyticsQuestion(params.userMessage);
 
   const messages: Array<{ role: "user" | "assistant"; content: unknown }> = [
     { role: "user", content: [{ type: "text", text: params.userMessage }] },
@@ -62,8 +78,13 @@ export async function runAnalyticsAgent(params: {
         max_tokens: 1400,
         system: [
           "あなたはWebアナリストです。",
+          `基準日時は ${params.referenceDateTime} (${params.referenceTimezone}) です。相対時刻は必ずこの基準で解釈してください。`,
+          `基準日の日付は ${params.referenceDate} です。`,
           "質問内容に応じて必要なツールだけを呼び出してください。",
           "GSCとGA4のどちらを使うかはユーザーの意図とデータ内容から判断してください。",
+          "分析系の質問、数値に関する質問、期間指定の質問では必ずツールを呼び出してください。ツール未実行で分析結果を断定してはいけません。",
+          "相対時刻を解釈したら、ツールには必ず明示的な startDate / endDate を YYYY-MM-DD 形式で渡してください。",
+          "回答では、実際にツールで取得した分析期間を明示してください。取得していない期間を分析したとは書かないでください。",
           "回答は必ず日本語で、実データを根拠に具体的に説明してください。",
         ].join("\n"),
         messages,
@@ -89,6 +110,20 @@ export async function runAnalyticsAgent(params: {
 
       if (!answer) {
         throw new Error("invalid_claude_response");
+      }
+
+      if (shouldRequireToolUse && toolCalls.length === 0) {
+        messages.push({ role: "assistant", content });
+        messages.push({
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: "この質問は実データ確認が必要です。ツールを呼び出し、startDate と endDate を明示したうえで回答をやり直してください。",
+            },
+          ],
+        });
+        continue;
       }
 
       return { answer, toolCalls };
